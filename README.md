@@ -12,6 +12,7 @@ Pada modul kali ini, kami diarahkan untuk membuat topologi di gns3 seperti berik
 
 
 ## Subnetting GNS3
+![final](https://github.com/yohanneslex/Jarkom-Modul-5-IT05-2023/assets/106576632/5f567567-ef11-4fcf-95a8-5dbb3c002ddc)
 
 
 ## Tree VLSM
