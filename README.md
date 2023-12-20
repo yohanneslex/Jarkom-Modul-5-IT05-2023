@@ -332,31 +332,75 @@ OPTIONS=
 Agar topologi yang kalian buat dapat mengakses keluar, kalian diminta untuk mengkonfigurasi Aura menggunakan iptables, tetapi tidak ingin menggunakan MASQUERADE.
 
 ### Jawaban 1
+Buat bash baru dengan nama aura.sh dengan isi berikut
 
+```
+ETH0_IP=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+
+iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to-source $ETH0_IP
+```
+
+Agar dapat mengakses internet tambahkan juga dns pada setiap node dengan cara
+```
+echo '
+nameserver 192.168.122.1
+' > /etc/resolv.conf
+```
 
 ### Soal 2
 Kalian diminta untuk melakukan drop semua TCP dan UDP kecuali port 8080 pada TCP.
 
 ### Jawaban 2
+Jalankan syntax dibawah ini untuk menyelesaikan permasalahan di atas
 
+```
+# Drop semua koneksi UDP
+iptables -A INPUT -p udp -j DROP
+
+# Drop semua koneksi TCP kecuali port 8080
+iptables -A INPUT -p tcp ! --dport 8080 -j DROP
+iptables -A INPUT -p tcp -j DROP
+```
 
 ### Soal 3
 Kepala Suku North Area meminta kalian untuk membatasi DHCP dan DNS Server hanya dapat dilakukan ping oleh maksimal 3 device secara bersamaan, selebihnya akan di drop.
 
 ### Jawaban 3
-
+Setting dahulu DNS dan DHCP server, setelah itu jalankan syntax berikut
+```
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p icmp -m connlimit --connlimit-above 3 --connlimit-mask 0 -j DROP
+```
 
 ### Soal 4
 Lakukan pembatasan sehingga koneksi SSH pada Web Server hanya dapat dilakukan oleh masyarakat yang berada pada GrobeForest.
 
 ### Jawaban 4
 
+jalankan syntax berikut untuk menyelesaikan permsalahan tersebut:
+```
+# di Node Sein
+# Mengizinkan port 22 yang digunakan sebagai SSH pada IP range
+iptables -A INPUT -p tcp --dport 22 -m iprange --src-range 10.66.8.3-10.66.10.5 -j ACCEPT
+
+# Drop port 22 agar tidak bisa SSH selain pada IP range
+iptables -A INPUT -p tcp --dport 22 -j DROP
+
+```
 
 ### Soal 5
 Selain itu, akses menuju WebServer hanya diperbolehkan saat jam kerja yaitu Senin-Jumat pada pukul 08.00-16.00.
 
 ### Jawaban 5
 
+jalankan syntax berikut untuk menyelesaikan permsalahan tersebut:
+```
+# Batasi akses inteernet menuju Webserver pada waktu tertentu
+iptables -A INPUT -p tcp --dport 80 -m time --timestart 08:00 --timestop 16:00 --weekdays Mon,Tue,Wed,Thu,Fri -j ACCEPT
+
+# Jika diluar waktu yang ditentukan drop akses internet
+iptables -A INPUT -p tcp --dport 80 -j DROP
+```
 
 ### Soal 6
 Lalu, karena ternyata terdapat beberapa waktu di mana network administrator dari WebServer tidak bisa stand by, sehingga perlu ditambahkan rule bahwa akses pada hari Senin - Kamis pada jam 12.00 - 13.00 dilarang (istirahat maksi cuy) dan akses di hari Jumat pada jam 11.00 - 13.00 juga dilarang (maklum, Jumatan rek).
